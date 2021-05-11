@@ -6,4 +6,5 @@ import kotlin.coroutines.coroutineContext
 
 object Utils {
     const val KEY = "Object"
+    const val KEY1 = "Object1"
 }
