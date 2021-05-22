@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.memoapp.R
 import com.example.memoapp.data.Memo
 
-
 class Adapter(
     var context: Context,
     var notes: List<Memo>,
@@ -51,15 +50,32 @@ class Adapter(
             }
         }
 
+
+
         override fun onCreateContextMenu(
             menu: ContextMenu?,
             v: View?,
             menuInfo: ContextMenu.ContextMenuInfo?
         ) {
-            TODO("Not yet implemented")
+            menu?.setHeaderTitle("Manipulate with note")
+            menu?.add(Menu.NONE, R.id.context_edit, 1, "Edit")
+                ?.setOnMenuItemClickListener(onClickMenu)
+            menu?.add(Menu.NONE, R.id.context_delete, 2, "Delete")
+                ?.setOnMenuItemClickListener(onClickMenu)
         }
 
-
+        private val onClickMenu: MenuItem.OnMenuItemClickListener =
+            MenuItem.OnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.context_edit -> {
+                        listener.onEditClick(adapterPosition)
+                    }
+                    R.id.context_delete -> {
+                        listener.onDeleteClick(adapterPosition)
+                    }
+                }
+                true
+            }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NotesHolder {

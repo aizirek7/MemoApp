@@ -18,7 +18,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/noteDate"
+        app:layout_constraintTop_toBottomOf="@id/noteDate"
         tools:text="Note title" />
 
     <TextView
@@ -31,7 +31,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/noteTitle"
+        app:layout_constraintTop_toBottomOf="@id/noteTitle"
         tools:text="Note Description" />
 
     <TextView

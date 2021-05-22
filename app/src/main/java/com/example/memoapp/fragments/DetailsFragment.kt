@@ -11,6 +11,7 @@ import com.example.memoapp.R
 import com.example.memoapp.data.Memo
 import com.example.memoapp.data.Utils
 
+
 class DetailsFragment : Fragment() {
 
     private lateinit var noteTitle: TextView

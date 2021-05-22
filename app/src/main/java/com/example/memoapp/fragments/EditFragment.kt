@@ -2,7 +2,6 @@ package com.example.memoapp.fragments
 
 import android.annotation.SuppressLint
 import android.app.DatePickerDialog
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -16,8 +15,7 @@ import com.example.memoapp.R
 import com.example.memoapp.data.Memo
 import com.example.memoapp.data.Utils
 import com.google.android.material.textfield.TextInputEditText
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import com.google.firebase.firestore.FirebaseFirestore
 import java.util.*
 
 class EditFragment : Fragment() {
@@ -28,7 +26,7 @@ class EditFragment : Fragment() {
     private lateinit var selectDate: Button
     private lateinit var selectedDateView: TextView
     private lateinit var saveNote: Button
-    val gson = Gson()
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -77,28 +75,29 @@ class EditFragment : Fragment() {
         saveNote.setOnClickListener {
             val noteTitleView = noteTitle.text.toString()
             val noteDescView = noteDesc.text.toString()
-            val noteDate = Date()
-            val note = Memo(noteTitleView, noteDescView, "Timestamp.now()")
-            val sharedPreferences = context?.getSharedPreferences(Utils.SHARED_DB_NAME, Context.MODE_PRIVATE)
-            if (sharedPreferences?.getString(Utils.DATA_LIST, null) != null){
-                val listType = object: TypeToken<MutableList<Memo>>()
-                {}.type
-            val json = sharedPreferences.getString(Utils.DATA_LIST, null)
-                val userNotes : MutableList<Memo> = gson.fromJson(json, listType)
-                userNotes.remove(noteArg)
-                userNotes.add(note)
-                setSharedPreferences(userNotes)
-                setFragment(MainFragment())
-            }
+            Log.i("MyData", "$noteTitleView  $noteDescView")
+            val note = Memo(noteTitleView, noteDescView, "Timestamp.now()", noteArg.id)
+            update(convertObjectToMap(note), note.id)
+            setFragment(MainFragment())
         }
     }
 
+    private fun update(note: Map<String, String>, id: String) {
+        db.collection("notes")
+            .document(id)
+            .update(note)
+            .addOnSuccessListener { Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show() }
+            .addOnFailureListener { e ->
+                Toast.makeText(context, "Error $e", Toast.LENGTH_SHORT).show()
+            }
+    }
 
     private fun convertObjectToMap(note: Memo): Map<String, String> {
         return mapOf(
             "title" to note.title,
             "description" to note.description,
-            "publicDate" to note.publicDate
+            "publicDate" to note.publicDate,
+            "id" to note.id
         )
     }
 
@@ -108,14 +107,5 @@ class EditFragment : Fragment() {
             commit()
         }
     }
-    private fun setSharedPreferences(userNotes: MutableList<Memo>) {
-        val sharedPreference =
-            context?.getSharedPreferences(Utils.SHARED_DB_NAME, Context.MODE_PRIVATE)
-        val editor = sharedPreference?.edit()
-        val userNotesString = gson.toJson(userNotes)
-        editor?.putString(Utils.DATA_LIST, userNotesString)
-        editor?.apply()
-    }
-
 
 }

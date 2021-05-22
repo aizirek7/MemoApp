@@ -2,9 +2,9 @@ package com.example.memoapp
 
 import android.annotation.SuppressLint
 import android.app.DatePickerDialog
-import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -17,15 +17,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.example.memoapp.data.Memo
-import com.example.memoapp.data.Utils
 import com.example.memoapp.fragments.LinkFragment
 import com.example.memoapp.fragments.MainFragment
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.SignInButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.textfield.TextInputLayout
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import java.text.SimpleDateFormat
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
@@ -33,11 +33,14 @@ class MainActivity : AppCompatActivity() {
     lateinit var toggle: ActionBarDrawerToggle
     lateinit var drawerLayout: DrawerLayout
     lateinit var navigationView: NavigationView
-    val gson = Gson()
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        setFragment(MainFragment())
 
         drawerLayout = findViewById(R.id.drawerLayout)
         navigationView = findViewById(R.id.navigationMenu)
@@ -49,12 +52,11 @@ class MainActivity : AppCompatActivity() {
         navigationView.setNavigationItemSelectedListener {
             when (it.itemId) {
                 R.id.setting -> setFragment(MainFragment())
-                R.id.link -> setFragment(LinkFragment())
+                R.id.link-> setFragment(LinkFragment())
             }
             drawerLayout.closeDrawers()
             true
         }
-        fragmentOrientation()
 
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener {
             openAddDialog()
@@ -99,25 +101,32 @@ class MainActivity : AppCompatActivity() {
             if (noteTitle.editText?.text.toString().isNotEmpty()
                 && noteDesc.editText?.text.toString().isNotEmpty()
                 && selectedDate != ""
-            )
+            ) {
+                val id = "note${UUID.randomUUID()}"
 
-
-
-            {
                 val note = Memo(
                     noteTitle.editText?.text.toString(),
                     noteDesc.editText?.text.toString(),
-                    convertDate(selectedDate)
+                    "Timestamp.now()",
+                    id
                 )
-                val sharedPreferences =
-                    getSharedPreferences(Utils.SHARED_DB_NAME, Context.MODE_PRIVATE)
-                if (sharedPreferences?.getString(Utils.DATA_LIST, null) != null) {
-                    val listType = object : TypeToken<MutableList<Memo>>() {}.type
-                    val json = sharedPreferences.getString(Utils.DATA_LIST, null)
-                    val userNotes: MutableList<Memo> = gson.fromJson(json, listType)
-                    userNotes.add(note)
-                    setSharedPreferences(userNotes)
-                }
+
+                val map = mutableMapOf<String, Any>()
+
+                map["title"] = note.title
+                map["description"] = note.description
+                map["publicDate"] = note.publicDate
+                map["id"] = note.id
+
+                db.collection("notes")
+                    .document(id)
+                    .set(map)
+                    .addOnSuccessListener {
+                        Log.i("MyData", "Data was successfully saved")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.i("MyData", "Loading failed: $e")
+                    }
             }
             setFragment(MainFragment())
         }
@@ -128,18 +137,6 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun convertDate(pickedDate: String): String {
-        val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH)
-        return sdf.parse(pickedDate) as String
-    }
-
-    private fun setSharedPreferences(userNotes: MutableList<Memo>) {
-        val sharedPreference = getSharedPreferences(Utils.SHARED_DB_NAME, Context.MODE_PRIVATE)
-        val editor = sharedPreference?.edit()
-        val userNotesString = gson.toJson(userNotes)
-        editor?.putString(Utils.DATA_LIST, userNotesString)
-        editor?.apply()
-    }
 
     private fun setFragment(fragment: Fragment) {
         val fragmentManager = supportFragmentManager
@@ -148,22 +145,4 @@ class MainActivity : AppCompatActivity() {
             .addToBackStack(null)
             .commit()
     }
-
-    private fun fragmentOrientation() {
-        val fragmentManager = supportFragmentManager
-        val fragment = fragmentManager.findFragmentById(R.id.fragment_container)
-        if (fragment == null) {
-            fragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, MainFragment())
-                .commit()
-        }
-
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            fragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, MainFragment())
-                .commit()
-        }
-    }
-
-
 }
