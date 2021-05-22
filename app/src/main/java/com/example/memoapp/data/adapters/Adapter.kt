@@ -1,76 +1,86 @@
 package com.example.memoapp.data.adapters
 
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.AdapterView
+import android.content.Context
+import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.memoapp.R
 import com.example.memoapp.data.Memo
 
-class  Adapter(var memoList: List<Memo>, var listener: OnItemClickListener) :
-    RecyclerView.Adapter< Adapter.ViewHolder>() {
 
+class Adapter(
+    var context: Context,
+    var notes: List<Memo>,
+    var listener: OnItemClickListener
+) : RecyclerView.Adapter<Adapter.NotesHolder>() {
 
-    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view), View.OnClickListener {
-        val itemTitle: TextView = view.findViewById(R.id.itemTitle)
-        val itemDescription: TextView= view.findViewById(R.id.itemDescription)
-
-        private val parent: CardView = view.findViewById(R.id.parent)
-        private val delete: ImageView = view.findViewById(R.id.delete)
-        private val edit : ImageView = view.findViewById(R.id.edit)
-
-
-
-
-
+    inner class NotesHolder(itemView: View) : RecyclerView.ViewHolder(itemView),
+        View.OnClickListener, View.OnCreateContextMenuListener {
+        val noteTitle: TextView = itemView.findViewById(R.id.note_title)
+        val noteDesc: TextView = itemView.findViewById(R.id.note_desc)
+        private val noteDelete: ImageView = itemView.findViewById(R.id.note_delete)
+        private val noteEdit: ImageView = itemView.findViewById(R.id.note_edit)
+        private val parent: CardView = itemView.findViewById(R.id.parent)
 
         init {
             parent.setOnClickListener(this)
-            delete.setOnClickListener(this)
-            edit.setOnClickListener(this)
-
+            noteDelete.setOnClickListener(this)
+            noteEdit.setOnClickListener(this)
+            itemView.setOnCreateContextMenuListener(this)
+            itemView.setOnLongClickListener {
+                it.showContextMenu()
+            }
         }
 
         override fun onClick(v: View?) {
-            when(v?.id){
+            when (v?.id) {
                 R.id.parent -> listener.onItemClick(adapterPosition)
-                R.id.edit -> listener.onEditClick(adapterPosition)
-                R.id.delete -> listener.onDeleteClick(adapterPosition)
+                R.id.note_delete -> Toast.makeText(
+                    context,
+                    "This function currently is in context menu",
+                    Toast.LENGTH_SHORT
+                ).show()
+                R.id.note_edit -> Toast.makeText(
+                    context,
+                    "This function currently is in context menu",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
+
+        override fun onCreateContextMenu(
+            menu: ContextMenu?,
+            v: View?,
+            menuInfo: ContextMenu.ContextMenuInfo?
+        ) {
+            TODO("Not yet implemented")
+        }
+
+
     }
 
-
-    override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(viewGroup.context).inflate(R.layout.memo_item, viewGroup, false)
-        return ViewHolder(view)
-
-
-
-
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NotesHolder {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.memo_item, parent, false)
+        return NotesHolder(view)
     }
 
+    override fun getItemCount(): Int {
+        return notes.size
+    }
 
-    override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
-        viewHolder.itemView.apply { viewHolder.itemTitle.text = memoList[position].memoTitle
-                                   viewHolder.itemDescription.text = memoList[position].memoDescription
-
+    override fun onBindViewHolder(holder: NotesHolder, position: Int) {
+        holder.itemView.apply {
+            holder.noteTitle.text = notes[position].title
+            holder.noteDesc.text = notes[position].description
         }
     }
 
-    override fun getItemCount() = memoList.size
-
-
-
-    interface OnItemClickListener{
+    interface OnItemClickListener {
         fun onItemClick(position: Int)
-        fun onEditClick(position: Int)
         fun onDeleteClick(position: Int)
-
+        fun onEditClick(position: Int)
     }
-
 }
